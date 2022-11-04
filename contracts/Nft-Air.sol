@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 contract MemeForest is ReentrancyGuard{
     using Counters for Counters.Counter;
     Counters.Counter public NumOfAllMemes;
-    Counters.Counter public NumOfAllMemebers;
+    Counters.Counter public NumOfAllMembers;
 
     struct MemeMembers{
         string Name;
@@ -45,6 +45,177 @@ contract MemeForest is ReentrancyGuard{
     event Memberjoined(
         uint256 MemberId,
         string MemberName,
-        s 
+        string Datejoined,
+        address MemberAddress,
+        uint256 MemberTotalMemes,
+        uint256 MemberStarredMemes,
+        uint256 MemberDeletedMemes,
+        uint256 MemberTotalLikes
+    );
+
+    event CreateMeme(
+        uint256 MemeId,
+        string MemeInfo,
+        address MemeCreator,
+        bool IsMemeStarred,
+        uint256 MemeStars,
+        uint256 MemeLikes,
+        string DateOfCreation,
+        string Filetype,
+        bool IsDownloadable,
+        uint Membernum,
+        uint NewNumberMemberMemes
+    );
+    event StarredMeme(
+        uint256 MemeId,
+        uint256 NewStarNo,
+        uint256 CreatorId,
+        address CreatorAddress,
+        uint256 CreatorStarredMemes
+    );
+    event UnStarringMeme(
+        uint256 MemeId,
+        uint256 NewStarNo,
+        uint256 CreatorId,
+        address CreatorAddress,
+        uint256 CreatorStarredMemes
+    );
+    event LikingMeme(
+        uint256 MemeId,
+        uint256 NewLikesNo,
+        uint256 CreatorId,
+        address liker
+    );
+    event UnLikingMeme(
+        uint256 MemeId,
+        uint256 NewLikesNo,
+        uint256 CreatorId,
+        address Unliker
+    );
+
+    function CreateMembers (string memory _name, string memory _date) public nonReentrant{
+        require(alreadyAMember[msg.sender] == false, "You are already a member");
+    
+        NumOfAllMembers.increment();
+        uint currentMemberId = NumOfAllMembers.current();
+        IdMembers[currentMemberId] = MemeMembers(
+            _name,
+            msg.sender,
+            currentMemberId,
+            0,
+            0,
+            0,
+            _date
+        );
+
+        alreadyAMember[msg.sender] = true;
+
+        emit Memberjoined(
+            currentMemberId,
+            _name,
+            _date,
+            msg.sender,
+            0,
+            0,
+            0,
+            0
+        );
+    }
+
+    function fetchMembers() public view returns(MemeMembers[] memory){
+        uint currentMemberNum = NumOfAllMembers.current();
+        uint currentIndex = 0;
+        MemeMembers[] memory members = new MemeMembers[] (currentMemberNum);
+        for(uint256 index = 0; index < currentMemberNum; index++){
+            uint currenNum = IdMembers[index + 1].MyId;
+            MemeMembers storage memeMem = IdMembers[currenNum];
+            members[currentIndex] = memeMem;
+            currentIndex += 1;
+        }
+        return members;
+    }
+
+    function GetMemberByAddr(address _member)external view returns(MemeMembers[] memory){
+        uint currentMemberNum = NumOfAllMembers.current();
+        uint currentIndex = 0;
+        MemeMembers[] memory foundMember = new MemeMembers[] (1);
+        for(uint i = 0; i < currentMemberNum; i++){
+            if(_member == IdMembers[i+1].MemberAddress){
+                uint currentmem = IdMembers[i+1].MyId;
+                MemeMembers storage memMem = IdMembers[currentmem];
+                foundMember[currentIndex] = memMem;
+            }
+        }
+        return foundMember;
+    }
+
+    function IsAMember(address sender) external view returns(bool){
+        bool member = alreadyAMember[sender];
+        return member;
+    }
+
+    function CreateMemeItems(string memory memeinfo,
+    address _owner,
+    string memory _date,
+    string memory _filetype,
+    bool _isDownloadable
     )
+    public nonReentrant{
+        NumOfAllMemes.increment();
+        uint256 currentMeme = NumOfAllMemes.current();
+        IdMemeFiles[currentMeme] = MemeFiles(
+            memeinfo,
+            _owner,
+            currentMeme,
+            false,
+            0,
+            0,
+            _date,
+            _filetype,
+            _isDownloadable
+        );
+        uint currentMemberNum = NumOfAllMembers.current();
+        uint currentNum;
+        uint newMemes;
+        for(uint i = 0; i < currentMemberNum; i++){
+            if(_owner == IdMembers[i+1].MemberAddress){
+                currentNum = IdMembers[i+1].MyId;
+                newMemes = IdMembers[currentNum].MyMemes;
+                newMemes += 1;
+                IdMembers[currentNum].MyMemes = newMemes;
+            }
+        }
+
+        emit CreateMeme(
+            currentMeme,
+            memeinfo,
+            _owner,
+            false,
+            0,
+            0,
+            _date,
+            _filetype,
+            _isDownloadable,
+            currentNum,
+            newMemes            
+        );
+    }
+
+    function fetchAllMemes() public view returns(MemeFiles[] memory){
+        uint currentMemeNum = NumOfAllMemes.current();
+        uint currentIndex = currentMemeNum;
+        MemeFiles[] memory memes = new MemeFiles[] (currentMemeNum);
+
+        for (uint256 index = 0; index < currentMemeNum; index++){
+            uint currenNum = IdMemeFiles[index + 1].fileId;
+            MemeFiles storage memeFiles = IdMemeFiles[currenNum];
+            memes[currentIndex - 1] = memeFiles;
+            currentIndex -= 1;
+        }
+
+        return memes;
+    }
+
+    
 }
+
