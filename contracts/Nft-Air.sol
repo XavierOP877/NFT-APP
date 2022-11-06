@@ -343,7 +343,55 @@ contract MemeForest is ReentrancyGuard{
         return youStarred;
     }
 
-    
+    function fetchMyStarredMemes(address sender) public view returns(MemeFiles[] memory) {
+        uint currentMemberNum = NumOfAllMembers.current();
+        uint currentNum;
+        for(uint i = 0; i < currentMemberNum; i++){
+            if(sender == IdMembers[i+1].MemberAddress){
+                uint val = IdMembers[i+1].MyId;
+                currentNum = IdMembers[val].MyStarredMemes;
+            }
+        }
 
+        uint currentMemeNum = NumOfAllMemes.current();
+        MemeFiles[] memory memes = new MemeFiles[] (currentNum);
+
+        uint currentIndex = 0;
+        for(uint index = 0; index < currentMemeNum; index++){
+            uint id = IdMemeFiles[index+1].fileId;
+            if(DidyouStar[sender][id] == true && IdMemeFiles[id].starred == true){
+                MemeFiles storage memeFiles = IdMemeFiles[id];
+                memes[currentIndex] = memeFiles;
+                currentIndex += 1;
+            }
+        }
+
+        return memes;
+    }
+
+    function fetchMyMeme(address sender) public view returns (MemeFiles[] memory){
+        uint currentMemberNum = NumOfAllMembers.current();
+        uint currentNum;
+        for(uint i = 0; i < currentMemberNum; i++){
+            if(sender == IdMembers[i+1].MemberAddress){
+                uint val = IdMembers[i+1].MyId;
+                currentNum = IdMembers[val].MyMemes;
+                console.log(val);
+            }
+        }
+
+        uint currentMemeNum = NumOfAllMemes.current();
+        uint currentIndex = 0;
+        MemeFiles[] memory memes = new MemeFiles[] (currentNum);
+        for(uint i = 0; i < currentMemeNum; i++){
+            uint id = IdMemeFiles[i+1].fileId;
+            if(sender == IdMemeFiles[id].Owner){
+                MemeFiles storage memeFiles = IdMemeFiles[id];
+                memes[currentIndex] = memeFiles;
+                currentIndex += 1;
+            }
+        }
+        return memes;
+    }
 }
 
